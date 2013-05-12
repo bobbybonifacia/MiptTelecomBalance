@@ -7,11 +7,11 @@
 #include <Windows.h>
 
 NetBalanceGetter::NetBalanceGetter(): QThread(), timeout_ms(5000){
-	SettingsManager mngr;
-	mngr.load_settings();
-	account =  mngr.account_number;
-	password = mngr.account_password;
-	wait_time = mngr.timeup;
+	ApplicationSettings mngr;
+	mngr.restoreSaved();
+	account =  mngr.userId;
+	password = mngr.userPassword;
+	wait_time = mngr.balanceUpdatePeriod;
 	manager = NULL;
 }
 NetBalanceGetter::~NetBalanceGetter(){
@@ -24,7 +24,7 @@ void NetBalanceGetter::run(){
 		QThread::sleep(wait_time);
 		if(!login_cabinet())	continue;
 		if(!get_cabinet_page())	continue;
-		if(!get_stat())			continue;
+		if(!get_timeleft())	continue;
 		if(!unlogin_cabinet())	continue;
 	}
 }
@@ -119,7 +119,10 @@ bool NetBalanceGetter::get_cabinet_page(){
 	}
 }
 
-bool NetBalanceGetter::get_stat(){
+
+
+
+bool NetBalanceGetter::get_timeleft(){
 	QNetworkReply* reply;
 
 	QTimer timeout;
@@ -141,34 +144,42 @@ bool NetBalanceGetter::get_stat(){
 		
 		int index = 0;
 		int pos = page_body.indexOf(separator) + QString(separator).length();
+		pos = page_body.indexOf(separator,pos) + QString(separator).length();
 		if(pos < 0){
 			//emit failed();
-			//return false;
+			MessageBox(NULL,NULL,NULL,2);
+			return false;
 		};
 
 		do{
 			if( (pos + index) >= page_body.size()){
-				//emit failed();
-				//return false;
+				emit failed();
+				return false;
 			}
 			stat.append(page_body[pos+index]);
 			index++;
 		}while(page_body[pos+index] != '<');
-
+		/*stat.append(".");
+		stat.append(page_body[pos+index+1]);
+		stat.append(page_body[pos+index+2]);
+		stat.append(page_body[pos+index+2]);*/
 		bool ok = false;
 		stat.toDouble(&ok);		
 		if(!ok){
-			//emit failed();
-			//return false;
+			emit failed();
+			MessageBox(NULL,stat.toStdWString().data(),NULL,2);
+			return false;
 		}
-		emit new_stat(stat.toDouble());
+		emit new_timeleft(stat.toDouble());
 		return true;
 	}else
 	{
 		//emit failed();
-		//return false;
+		return false;
 	}
 }
+
+
 
 
 
@@ -219,9 +230,9 @@ void NetBalanceGetter::set_account(int new_acc){
 
 
 void NetBalanceGetter::reload_settings(){
-	SettingsManager mngr;
-	mngr.load_settings();
-	account =  mngr.account_number;
-	password = mngr.account_password;
-	wait_time = mngr.timeup;
+	ApplicationSettings mngr;
+	mngr.restoreSaved();
+	account =  mngr.userId;
+	password = mngr.userPassword;
+	wait_time = mngr.balanceUpdatePeriod;
 }

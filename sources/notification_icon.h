@@ -1,30 +1,42 @@
-#ifndef _NOTIFICATTION_ICON_H_
-#define _NOTIFICATTION_ICON_H_
+#ifndef _NOTIFICATTION_ICON_HPP_
+#define _NOTIFICATTION_ICON_HPP_
 
+#include "ApplicationSettings.hpp"
+#include "full_settings_dialog.h"
 #include <QSystemTrayIcon>
 #include <QMenu>
 
-class NotificationIcon: public QObject{
+enum State{OK, FAILED, STARTING};
+
+class NotificationIcon: public QObject
+{
 Q_OBJECT
 private:
-	bool few_money; 
-	bool use_alerts;
-	int few_money_boundary;
-	
-	QSystemTrayIcon*	p_icon; 	
-	QMenu*				p_menu;
+	ApplicationSettings *p_settingsData;
+    FullSettingsDialog  *p_settingsDialog;
+	QSystemTrayIcon     *p_trayIcon; 	
+	QMenu               *p_trayMenu;
+    QPixmap             *p_iconImage;
+    QString             *p_toolTipText;
+    State                currentState;
+    bool                 alertWasShowed;
+    double               curentBalance;
+    long int             consumptionTraffic;
 
+    bool showAlarm(double balance);
 
 public:
 	NotificationIcon();
 signals:
 	void new_settings();
-public slots:
-	void reload_settings();
-	void change_info(double new_balance);
-	void connection_issues();
-	void settings_dialog();
+private slots:
+	void SettingsDialog();
 	void about_dialog();
-	void app_exit();
+	void ApplicationExit();
+public slots:
+	void ReloadSettings();
+	void ShowBalance(double balance);
+	void FailedGetBalance();
+	void UpdateTrafficStatistic(double consumptionPerMonth);
 };
 #endif

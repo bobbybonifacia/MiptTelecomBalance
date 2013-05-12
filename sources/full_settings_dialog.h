@@ -40,7 +40,7 @@ signals:
 	void new_settings();
 private slots:
 	void alert_lock(int code);
-	void lbl_uptime(int timeup);
+	void lbl_uptime(int balanceUpdatePeriod);
 	void dialog_accept();
 };
 #endif;

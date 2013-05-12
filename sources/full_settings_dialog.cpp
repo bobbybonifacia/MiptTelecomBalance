@@ -1,5 +1,5 @@
 #include "full_settings_dialog.h"
-#include "settings_save_load_manager.h"
+#include "ApplicationSettings.h"
 #include <QCoreApplication>
 #include <QIntValidator>
 #include <QPushButton>
@@ -16,32 +16,32 @@
 FullSettingsDialog::FullSettingsDialog()
 	:QDialog(0, Qt::WindowTitleHint | Qt::WindowSystemMenuHint)
 {
-	SettingsManager mngr;
-	mngr.load_settings();
+	ApplicationSettings mngr;
+	mngr.restoreSaved();
 	p_label_number		= new QLabel("Account number:");
 	p_label_password	= new QLabel("Account password:");
 	
-	p_number	= new QLineEdit(QString::number(mngr.account_number));
+	p_number	= new QLineEdit(QString::number(mngr.userId));
 	p_val		= new QIntValidator(1,9999999,this);
 	p_number->setValidator(p_val);
 	
-	p_password	= new QLineEdit(mngr.account_password);
+	p_password	= new QLineEdit(mngr.userPassword);
 	p_password->setEchoMode(QLineEdit::Password);
 
 	p_label_number->setBuddy(p_number);
 	p_label_password->setBuddy(p_password);
 
 	p_use_alerts = new QCheckBox("Show alert if balance is less then");
-	p_use_alerts->setChecked(mngr.use_alerts);
-	p_alert_lim = new QLineEdit(QString::number(mngr.alerts_boundary));
+	p_use_alerts->setChecked(mngr.useLimitAlert);
+	p_alert_lim = new QLineEdit(QString::number(mngr.boundaryLimitAlert));
 	p_alert_lim->setValidator(p_val);
 
 	p_lbl_uptime = new QLabel("Time up is  sec.");
 	p_uptime = new QSlider(Qt::Horizontal);
 	p_uptime->setRange(5, 60);
 	p_uptime->setPageStep(5);
-	p_uptime->setValue(mngr.timeup);
-	lbl_uptime(mngr.timeup);
+	p_uptime->setValue(mngr.balanceUpdatePeriod);
+	lbl_uptime(mngr.balanceUpdatePeriod);
 
 	p_ok = new QPushButton("Ok");
 	p_cancel = new QPushButton("Cancel");
@@ -69,8 +69,7 @@ FullSettingsDialog::FullSettingsDialog()
 
 	setWindowTitle("Application settings");
 	setFixedSize(350,200);
-	setModal(true);
-	show();
+	setModal(false);
 }
 
 FullSettingsDialog::~FullSettingsDialog(){
@@ -96,22 +95,22 @@ void FullSettingsDialog::alert_lock(int code){
 }
 
 
-void FullSettingsDialog::lbl_uptime(int timeup){
+void FullSettingsDialog::lbl_uptime(int balanceUpdatePeriod){
 	QString text = "Time up is ";
-	text.append(QString::number(timeup));
+	text.append(QString::number(balanceUpdatePeriod));
 	text.append(" sec.");
 	p_lbl_uptime->setText(text);
 }
 
 
 void FullSettingsDialog::dialog_accept(){
-	SettingsManager mngr;
-	mngr.account_number = p_number->text().toInt();
-	mngr.account_password = p_password->text();
-	mngr.alerts_boundary = p_alert_lim->text().toInt();
-	mngr.use_alerts = p_use_alerts->isChecked();
-	mngr.timeup = p_uptime->value();
-	mngr.save_settings();
+	ApplicationSettings mngr;
+	mngr.userId = p_number->text().toInt();
+	mngr.userPassword = p_password->text();
+	mngr.boundaryLimitAlert = p_alert_lim->text().toInt();
+	mngr.useLimitAlert = p_use_alerts->isChecked();
+	mngr.balanceUpdatePeriod = p_uptime->value();
+	mngr.saveActual();
 	emit new_settings();
 	accept();
 }

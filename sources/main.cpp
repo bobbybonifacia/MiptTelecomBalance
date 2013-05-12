@@ -2,29 +2,30 @@
 #include "notification_icon.h"
 #include "account_settings_dialog.h"
 #include "full_settings_dialog.h"
-#include "settings_save_load_manager.h"
+#include "ApplicationSettings.hpp"
 #include <QtGui/QApplication>
 
 int main(int argc, char *argv[])
 {
 	QApplication app(argc, argv);
-	SettingsManager mngr;
-	mngr.load_settings();
+	ApplicationSettings mngr;
+	mngr.restoreSaved();
 
-	if(mngr.is_account_good() == false){
+	if(mngr.userInfoExist() == false){
 		AccountDialog dialog;
 		dialog.get_info_or_exit();
-		mngr.account_number = dialog.acc_num;
-		mngr.account_password = dialog.acc_pass;
-		mngr.save_settings();
+		mngr.userId = dialog.acc_num;
+		mngr.userPassword = dialog.acc_pass;
+		mngr.saveActual();
 	}
 
 	NotificationIcon icon;
 	NetBalanceGetter getter;
-	QObject::connect(&icon, SIGNAL(new_settings()), &icon, SLOT(reload_settings()));
+	QObject::connect(&icon, SIGNAL(new_settings()), &icon, SLOT(ReloadSettings()));
 	QObject::connect(&icon, SIGNAL(new_settings()), &getter, SLOT(reload_settings()));
-	QObject::connect(&getter, SIGNAL(new_balance(double)), &icon, SLOT(change_info(double)));
-	QObject::connect(&getter, SIGNAL(failed()), &icon, SLOT(connection_issues()));
+	QObject::connect(&getter, SIGNAL(new_balance(double)), &icon, SLOT(ShowBalance(double)));
+	QObject::connect(&getter, SIGNAL(new_timeleft(double)), &icon, SLOT(UpdateTrafficStatistic(double)));
+	QObject::connect(&getter, SIGNAL(failed()), &icon, SLOT(FailedGetBalance()));
 	getter.start();
 	QApplication::setQuitOnLastWindowClosed(false);
 
@@ -39,7 +40,7 @@ int main(int argc, char *argv[])
 	FullSettingsDialog test;
 	
 	QObject::connect(&t, SIGNAL(account_number(int)), &getter, SLOT(set_account(int)));
-	QObject::connect(&t, SIGNAL(account_password(const QString &)), &getter, SLOT(set_password(const QString &)));
+	QObject::connect(&t, SIGNAL(userPassword(const QString &)), &getter, SLOT(set_password(const QString &)));
 
 	
 	if(t.exec() == QDialog::Rejected)

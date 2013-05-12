@@ -76,8 +76,7 @@ void AccountDialog::get_info_or_exit(){
 
 void AccountDialog::ok_acc(){
 	int cur;
-	QString str = p_number->text();
-	if(p_val->validate(str,cur) == QValidator::Acceptable){
+	if(p_val->validate(p_number->text(),cur) == QValidator::Acceptable){
 		set_info();
 		accept();
 	}
